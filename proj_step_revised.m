@@ -39,27 +39,15 @@ end
 % nabla^2 u = b
 % b = dudx + dvdy
 
-A = speye(m,m);
-b = zeros(m*m,1);
-sol = zeros(m*m,1);
 
 
 A = testA(m-1);
-u_df = zeros(m+1,m);
-v_df = zeros(m,m+1);
 
 dudx = div_u(u_s,m,h);
 dvdy = div_v(v_s,m,h);
-phi  = zeros(m,m); % Pressure
 
-% initialize b
-for j = 1:m
-    for i = 1:m
-        b(i+(j-1)*m) = dudx(i,j) + dvdy(i,j);
-    end
-end
-
-sol = A \ b;
+sol = poisson_solver(A,m,dudx,dvdy);
+phi = zeros(m*m);
 
 % update phi (matrix)
 
