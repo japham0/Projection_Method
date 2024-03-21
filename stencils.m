@@ -2,15 +2,15 @@ clc; clear all; close all;
 
 n = 10;
 
-test_neumann2(n)
+test_neumann1(n)
 
-m = 20;
-
-test_neumann2(m)
-
-p = 40;
-
-test_neumann2(p)
+% m = 20;
+% 
+% test_neumann2(m)
+% 
+% p = 40;
+% 
+% test_neumann2(p)
 
 % test_neumann2(n)
 
@@ -64,7 +64,8 @@ y = linspace(0,1, n+1);
 
 % lower boundary: y=0  -du/dy
 low   = -2*cos(3*x);
-
+size(x)
+size(y)
 % left boundary:  x=0  -du/dx
 left  = -3*cos(2*y);
 
