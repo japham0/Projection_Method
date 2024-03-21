@@ -1,9 +1,22 @@
 clc; close all; clear;
 
+proj_step(4)
 
-m = 10; % Grid Size
-L = 1; % Domain [L x L]
-h = L / m; % Step Size
+function out = proj_step(m)
+
+% This function executes one projection step on 
+% the domain [0,1]x[0,1] with a grid size m x m. 
+% It follows the calculation:
+
+% u* = u_df + (nabla phi)
+% div u* = div u_df + nabla^2 phi
+% div u* = nabla^2 phi
+% solves poisson equation
+
+% And returns the error between u_divfree and u_true
+
+L = 1;
+h = L / m;
 
 u_s = zeros(m+1, m);
 u_t = zeros(m+1, m);
@@ -14,8 +27,8 @@ v_t = zeros(m, m+1);
 dudx = zeros(m,m); % Can only have derivatives on m x m grid using FD
 dvdy = zeros(m,m);
 
-%% Initialize u*
 
+%% Initialize u*
 for i = 1:m+1
     for j = 1:m
         u_s(i,j) = u_star((i-1)*h,j*h-h/2);
@@ -29,48 +42,23 @@ for i = 1:m
         v_t(i,j) = v_true(i*h-h/2, (j-1)*h);
     end
 end
+u_s
+v_s
 
-% u* = u_df + (nabla phi)
-% div u* = div u_df + nabla^2 phi
-% div u* = nabla^2 phi
-% need to solve poisson equation
+%% Solve Poisson Equation
+A = A_matrix(m-1); % Construct Poisson matrix
+dudx = div_u(u_s,m,h);
+dvdy = div_v(v_s,m,h);
 
 % POISSON SOLVER
 % nabla^2 u = b
 % b = dudx + dvdy
-
-A = speye(m,m);
-b = zeros(m*m,1);
-sol = zeros(m*m,1);
-
-
-A = testA(m-1);
-u_df = zeros(m+1,m);
-v_df = zeros(m,m+1);
-
-dudx = div_u(u_s,m,h);
-dvdy = div_v(v_s,m,h);
-phi  = zeros(m,m); % Pressure
-
-% initialize b
-for j = 1:m
-    for i = 1:m
-        b(i+(j-1)*m) = dudx(i,j) + dvdy(i,j);
-    end
-end
-
-sol = A \ b;
-
-% update phi (matrix)
-
-for j = 1:m
-    for i = 1:m
-        phi(i,j) = sol(i+(j-1)*m);
-    end
-end
+sol = poisson_solver(A,m,dudx,dvdy);
 
 % u_df = u* - grad(phi)
+phi = pressure(m,sol);
 
+%% Compute divergence-free part of u
 for j = 1:m
     for i = 2:m
         % rows 2 through m
@@ -105,11 +93,27 @@ end
 % plot(b)
 
 % Difference between u_div_free and u_true
-u_e = max(max(u_df-u_t))
-v_e = max(max(v_df-v_t))
+u_e = max(max(u_df-u_t));
+v_e = max(max(v_df-v_t));
 
-   
+out = [u_e, v_e];
+end
 
+function out = pressure(m, sol)
+% This function returns the pressure field on
+% the mxm grid given the vector from the solution 
+% to the poisson equation
+
+phi = zeros(m*m);
+% update phi (matrix)
+for j = 1:m
+    for i = 1:m
+        phi(i,j) = sol(i+(j-1)*m);
+    end
+end
+
+out = phi;
+end
 
 % div_u calculation
 function du = div_u(u_s,m,h)
@@ -130,112 +134,30 @@ end
 end
 
 function u = u_star(x,y)
-    %u = sin(x)*cos(y);
-    u = (x^3/3) * y^2;
+u = sin(x)*cos(y);
+%u = (x^3/3) * y^2;
 end
 
 function u = u_true(x,y)
-    %u = sin(x)*cos(y);
-    u = (x^3/3) * y^2;
+u = sin(x)*cos(y);
+%u = (x^3/3) * y^2;
 end
 function v = v_star(x,y)
-    %v = -cos(x)*sin(y);
-    v = (-y^3/3) * x^2;
+v = -cos(x)*sin(y);
+%v = (-y^3/3) * x^2;
 end
 function v = v_true(x,y)
-    %v = -cos(x)*sin(y);
-    v = (-y^3/3) * x^2;
+v = -cos(x)*sin(y);
+%v = (-y^3/3) * x^2;
 end
 
 
-function A = Construct_A(A,m)
-
-% interior nodes
-for j = 2:m-1
-    for i = 2:m-1
-        A(i+(j-1)*m,i+(j-1)*m-m) = 1;
-        A(i+(j-1)*m,i+(j-1)*m-1) = 1;
-        A(i+(j-1)*m,i+(j-1)*m) = -4;
-        A(i+(j-1)*m,i+(j-1)*m+1) = 1;
-        A(i+(j-1)*m,i+(j-1)*m+m) = 1;
-    end
-end
-
-%LEFT
-for j = 2:m-1
-    i = 1;
-    A(i+(j-1)*m,i+(j-1)*m-m) = 1;
-    A(i+(j-1)*m,i+(j-1)*m) = -3;
-    A(i+(j-1)*m,i+(j-1)*m+1) = 1;
-    A(i+(j-1)*m,i+(j-1)*m+m) = 1;
-end
-
-% RIGHT
-for j = 2:m-1
-    i = m;
-    A(i+(j-1)*m,i+(j-1)*m-m) = 1;
-    A(i+(j-1)*m,i+(j-1)*m-1) = 1;
-    A(i+(j-1)*m,i+(j-1)*m) = -3;
-    A(i+(j-1)*m,i+(j-1)*m+m) = 1;
-end
-
-% DOWN
-for i = 2:m-1
-    j = 1;
-    A(i+(j-1)*m,i+(j-1)*m-1) = 1;
-    A(i+(j-1)*m,i+(j-1)*m) = -3;
-    A(i+(j-1)*m,i+(j-1)*m+1) = 1;
-    A(i+(j-1)*m,i+(j-1)*m+m) = 1;
-end
-
-% UP
-for i = 2:m-1
-    j = m;
-    A(i+(j-1)*m,i+(j-1)*m-m) = 1;
-    A(i+(j-1)*m,i+(j-1)*m-1) = 1;
-    A(i+(j-1)*m,i+(j-1)*m) = -3;
-    A(i+(j-1)*m,i+(j-1)*m+1) = 1;
-end
-
-% FIX SINGULAR MATRIX PROBLEM
-A(1,1) = 1;
-
-% bottom right corner
-i = m;
-j = 1;
-
-A(i+(j-1)*m,i+(j-1)*m-1) = 1;
-A(i+(j-1)*m,i+(j-1)*m) = -2;
-A(i+(j-1)*m,i+(j-1)*m+m) = 1;
-
-% top right corner
-i = m;
-j = m;
-
-A(i+(j-1)*m,i+(j-1)*m-m) = 1;
-A(i+(j-1)*m,i+(j-1)*m-1) = 1;
-A(i+(j-1)*m,i+(j-1)*m) = -2;
-
-% Top left
-i = 1;
-j = m;
-
-A(i+(j-1)*m,i+(j-1)*m-m) = 1;
-A(i+(j-1)*m,i+(j-1)*m) = -2;
-A(i+(j-1)*m,i+(j-1)*m+1) = 1;
-end
-
-function A = testA(n)
-%% NEUMANN BOUNDARY
+function A = A_matrix(n)
+% This function returns the matrix for solving the 
+% 2D Poisson equation with Neumann boundary conditions
 h = 1/n;
-% sin(3x+2y)
-% du / dy = 2cos(3x+2y)
-% du / dx = 3cos(3x+2y)
-
 x = linspace(0,1, n+1);
 y = linspace(0,1, n+1);
-
-%% BUILD STENCIL
 
 I = eye(n+1);
 I(1,1) = 1/2;
@@ -258,11 +180,34 @@ for j=1:n+1
     A((n+1)^2+1-j,(n+1)*n+1-j) = -2;
 end
 A = n^2*A;
-%full(A)
 
 %% SET CORNERS & FIX 1 EQN
 A = full(A);
 A(1,1) = 1;
 A(1,2) = 0;
 A(1,n+2) = 0;
+end
+
+function sol = poisson_solver(A,m,dudx,dvdy)
+
+% u* = u_df + (nabla phi)
+% div u* = div u_df + nabla^2 phi
+% div u* = nabla^2 phi
+% need to solve poisson equation
+
+% POISSON SOLVER
+% nabla^2 u = b
+% b = dudx + dvdy
+
+b = zeros(m*m,1);
+sol = zeros(m*m,1);
+
+% initialize b
+for j = 1:m
+    for i = 1:m
+        b(i+(j-1)*m) = dudx(i,j) + dvdy(i,j);
+    end
+end
+
+sol = A \ b;
 end
