@@ -72,15 +72,15 @@ end
 figure()
 loglog(h_list, 10*h_list.^2);
 hold on
-loglog(h_list, mac_err)
+loglog(h_list, mac_err, Marker="+", MarkerSize=18, MarkerEdgeColor='k')
 grid on
 xlabel("$h$", Interpreter="latex", FontSize=20)
 ylabel("$\Vert u_{true}-u_{approx} \Vert$", Interpreter="latex", FontSize=20)
 title("Convergence of Solution to Heat Equation on MAC Grid", Interpreter="latex", FontSize=20)
 legend("$O(h^2)$", "error", Interpreter="latex", FontSize=20)
 
-figure()
-surf(x,y,reshape(u_true_end-u_step, Nx, Nx+1))
+% figure()
+% surf(x,y,reshape(u_true_end-u_step, Nx, Nx+1))
 
 
 

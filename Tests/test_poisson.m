@@ -2,20 +2,20 @@ clc; close all; clear;
 
 
 h_list = [];
-Nx_list = [4,10,20,40];
+Nx_list = [5,10,20,40];
 iter = 1;
-test_poisson = [];
+test_p = [];
 
 
 while iter < 5
     Nx = Nx_list(iter);
-    test_poisson(iter) = test_neumann1(Nx);
+    test_p(iter) = test_neumann1(Nx);
     h_list(iter) = 1/Nx;
     iter = iter + 1;
 end
 loglog(h_list,h_list.^2);
 hold on
-loglog(h_list, test_poisson)
+loglog(h_list, test_p)
 grid on
 xlabel("$h$", Interpreter="latex", FontSize=20)
 ylabel("$\Vert \phi_{true}-\phi_{approx} \Vert$", Interpreter="latex", FontSize=20)
@@ -72,11 +72,8 @@ b = h^2 * b';
 b(1) = cos(pi*x(1))*cos(pi*y(1)); % b(1) = 0
 
 %% SOLVE SYSTEM
-% u = A \ b;
-% u = A_n(n) \ b;
+
  phi = P_matrix(n) \ b;
-% u = P_m(zeros(n+1), n+1) \ b;
-% u = pinv(P_matrix(n))*b;
 
 %% COMPARE TO TRUE SOLUTION
 

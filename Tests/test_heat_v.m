@@ -22,7 +22,6 @@ while iter < 5
     Nt = 400;     % Number of timesteps
     dt = 0.001;
     epsilon = 1;
-
     r = epsilon * dt / (2*h^2);
     v_e = [];
 

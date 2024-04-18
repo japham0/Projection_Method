@@ -1,4 +1,8 @@
 clc; close all; clear;
+% This file tests the divergence operator
+% computed by 
+
+% 3/22/24 shows order 2 
 
 test_divergence = [];
 h_list = [];
@@ -51,19 +55,36 @@ test_poisson = [];
     numerical_divergence = dudx(:) + dvdy(:);
     %true_divergence = zeros(size(numerical_divergence));
     true_divergence = true(:);
-    test_divergence(iter) = max(abs(numerical_divergence-true_divergence))
+    test_divergence(iter) = max(abs(numerical_divergence-true_divergence));
     iter = iter + 1;
 
  end
+ test_divergence
+ figure(1)
+ subplot(1,2,1);
+ surf(X, Y, reshape(numerical_divergence, [Nx, Nx]), 'EdgeColor', 'none');
+ title('Approximate Divergence');
+ xlabel('x');
+ ylabel('y');
+ zlabel('Divergence');
 
-loglog(h_list,h_list.^2);
-hold on
-loglog(h_list, test_divergence)
-grid on
-xlabel("$h$", Interpreter="latex", FontSize=20)
-ylabel("$\Vert (\nabla \cdot u)_{approx}-(\nabla \cdot u)_{true} \Vert$", Interpreter="latex", FontSize=20)
-title("$O(h)$ Convergence of Divergence Operator", Interpreter="latex", FontSize=20)
-legend("$O(h^2)$", "error", Interpreter="latex", FontSize=20)
+ subplot(1,2,2);
+ surf(X, Y, true, 'EdgeColor', 'none');
+ title('True Divergence');
+ xlabel('x');
+ ylabel('y');
+ zlabel('Divergence');
+ figure()
+
+ figure(2)
+ loglog(h_list,h_list.^2);
+ hold on
+ loglog(h_list, test_divergence, Marker="*")
+ grid on
+ xlabel("$h$", Interpreter="latex", FontSize=20)
+ ylabel("$\Vert (\nabla \cdot u)_{approx}-(\nabla \cdot u)_{true} \Vert$", Interpreter="latex", FontSize=20)
+ title("$O(h^2)$ Convergence of Divergence Operator", Interpreter="latex", FontSize=20)
+ legend("$O(h^2)$", "error", Interpreter="latex", FontSize=20)
 
 
 % du/dx calculation
